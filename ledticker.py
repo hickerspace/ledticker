@@ -1,4 +1,10 @@
 class LedTicker(object):
+    """
+    LedTicker
+
+    This code converts your text (420 chars max per message) into a valid
+    protocol message the LED ticker understands and displays.
+    """
     ASCII2ISO8859_15 = {
             0x0A: 0x20,  0x0D: 0x20,  0xC3: 0x7F,  0xC2: 0x80,
             0xC1: 0x81,  0xC0: 0x82,  0xC4: 0x83,  0xC5: 0x84,
@@ -18,20 +24,24 @@ class LedTicker(object):
             0xFB: 0xB9,  0xFC: 0xBA,  0xFF: 0xBB,  0xFD: 0xBC,
             0xA5: 0xBD,  0xA3: 0xBE,  0xA4: 0xBF }
 
-    # Constructor.
-    # @param string text file holding messages
-    #
-    # @param integer sign id
     def __init__(self, ledfile="ledticker.txt", sign_id=20):
+        """
+        Constructor.
+
+        @param string text file holding messages
+        @param integer sign id
+        """
         self.ledfile = ledfile
 
         # sign id between 1 and 255 (hex: 01 to FF)
         self.sign_id = sign_id
 
-    # Public function to get the current output
-    #
-    # @return string Output formatted for the ledticker
     def get_output(self):
+        """
+        Public function to get the current output
+
+        @return string Output formatted for the ledticker
+        """
         # NOTE: the flags for the php file() function FILE_IGNORE_NEW_LINES and
         # FILE_SKIP_EMPTY_LINES don't exist in python afaik. can we live
         # without them or do we need a workaround?
@@ -40,25 +50,32 @@ class LedTicker(object):
 
         return self.create_output(input_)
 
-    # Public function to add a new item to the messagestack
-    #
-    # Needs some sanityfu
-    # @param string $text the message
     def add_item(self, text):
+        """
+        Public function to add a new item to the messagestack
+
+        Needs some sanityfu
+        @param string $text the message
+        """
         open(self.ledfile, "a").write(text + "\n")
 
-    # Returns number of available message items
-    # @return integer number of available messages
     def items_available(self):
+        """
+        Returns number of available message items
+
+        @return integer number of available messages
+        """
         return len(open(self.ledfile, "r").rstrip("\n").split("\n"))
 
-    # Gets the next item
-    #
-    # This function deletes the current item and gets the next one
-    #
-    # @param array all items
-    # @return string the text to be displayed
     def get_next_text(self, items):
+        """
+        Gets the next item
+
+        This function deletes the current item and gets the next one
+
+        @param array all items
+        @return string the text to be displayed
+        """
         result = items.pop()
 
         filestream = open(self.ledfile, "w")
@@ -68,13 +85,15 @@ class LedTicker(object):
 
         return result
 
-    # Creates a string for the led ticker
-    # 
-    # Converts a given string suitable for the hickerspace led ticker
-    # 
-    # @param string $input the input string (optional)
-    # @return string the string to be sent to the ticker display
     def create_output(self, input_=""):
+        """
+        Creates a string for the led ticker
+
+        Converts a given string suitable for the hickerspace led ticker
+
+        @param string $input the input string (optional)
+        @return string the string to be sent to the ticker display
+        """
         input_ = input_.decode("UTF-8", "ignore").encode("ISO-8859-15", "ignore")
         text = "<L1><PB><FE><MC><WC><FE>"
         for char in input_:
@@ -83,32 +102,38 @@ class LedTicker(object):
         return "<ID%x>%s%s<E>" % (self.sign_id, text,
                 self.calculate_checksum(text))
 
-    # Calculates checksum
-    # 
-    # Calculates the checksum of given text.
-    # 
-    # @param string $text the input text
-    # @return string the calculated checksum
     def calculate_checksum(self, text):
+        """
+        Calculates checksum
+
+        Calculates the checksum of given text.
+
+        @param string $text the input text
+        @return string the calculated checksum
+        """
         checksum = 0
         for i in range(len(text)):
             checksum ^= ord(text[i])
 
         return "%x" % (checksum % 256)
 
-    # Converts a UTF-8 char to iso8859_15, if possible.
-    #
-    # Needs some kind of blacklist for unconvertable chars.
-    #
-    # @return string converted character, if available. Otherwise given character.
     def utf8_to_iso8859_15(self, utf8char):
+        """
+        Converts a UTF-8 char to iso8859_15, if possible.
+
+        Needs some kind of blacklist for unconvertable chars.
+
+        @return string converted character, if available. Otherwise given character.
+        """
         try:
             return self.ASCII2ISO8859_15[utf8char]
         except KeyError:
             return utf8char
 
-    # Gives the ledticker an id.
-    #
-    # @return string the string to be sent to the ticker display
     def set_sign_id(self):
+        """
+        Gives the ledticker an id.
+
+        @return string the string to be sent to the ticker display
+        """
         return "<ID><%x><E>" % self.sign_id
